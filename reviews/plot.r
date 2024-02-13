@@ -12,21 +12,20 @@ library(ape)
 library(viridis)
 library(ggsci)
 
-setwd("/home/elise/Desktop/hp/reviews")
+setwd("/media/elise/PortableSSD/2021_2023_Postdoc_IPS/HpGlobal/wHpGP")
+
+palette <- read.table("colors.txt", skip = 10)
 
 colPop <- c("hpAfrica2" = "red", "hpAfrica1" = "#7F7F7F", "hspAfrica1SAfrica" = "#D9D9D9", "hspAfrica1WAfrica" = "#7F7F7F", "hspCNEAfrica" = "#A3D399", "hpNEAfrica" = "#008041", "hspSWEuropeLatinAmerican" = "#D5A6BD", "hspSWEurope" = "#E6A5D6", "hspSEurope" = "#FF8BD3", "hspEuropeMiddleEast" = "#A64D79", "hspNEurope" = "#D62FAE", "hpEurope" = "#D62FAE" #"#741B47"
             , "hspUral" = "#FAB778", "hspSiberia_low" = "#EB3D4F", "hpNorthAsia" = "#E76710", "hspEAsia" = "#920808", "hpAsia2" = "#FFD966", "hpSahul" = "#D5B7ED", "hspIndigenousNAmerica_low" = "#7B4BA0", "hspIndigenousSAmerica_low" = "#AA8AC3", "Hacinonychis" = "limegreen", "Monkey" = "limegreen", "Primate" = "limegreen", "hspIndigenousSAmerica_high" = "#ABCDEF", "hspIndigenousNAmerica_high" = "#3E5170", "hspSiberia_high" = "#C7EAFF", "hspSiberia" = "purple", "hspIndigenousNAmerica" = "blue", "hspIndigenousSAmerica" = "deepskyblue", "Hcetorum" = "deeppink", "other" = "grey", "NA" = "black")
 
 ## use the viridis package to get a colorblind-friendly color palette
-colVir <- viridis(14)
-colVir = c("#440154FF", "#481D6FFF", "#453581FF", "#3D4D8AFF", "#34618DFF", "#2B748EFF", "#24878EFF", "#1F998AFF", "#25AC82FF", "#40BC72FF", "#67CC5CFF", "#97D83FFF", "#CBE11EFF", "#FDE725FF")
-colVir <- turbo(14)
-# [1] "#30123BFF" "#424AB3FF" "#467EF4FF" "#31AFF5FF" "#18DAC7FF" "#38F491FF"
-# [7] "#83FF52FF" "#BDF534FF" "#E9D539FF" "#FEAA33FF" "#F8721CFF" "#E03F08FF"
-#[13] "#B61C02FF" "#7A0403FF"
+colVir <- palette$V3[seq(from = 1, to = 30, by = 2)]
+colVir <- paste0("#", colVir)
 
-colPop <- c("Hacinonychis" = colVir[1], "hpAfrica1" = colVir[2], "hpAfrica2" = colVir[3], "hpAsia2" = colVir[4], "hpEurope" = colVir[5], "hpNEAfrica" = colVir[6], "hpNorthAsia" = colVir[7], "hpSahul" = colVir[8], "hspEAsia" = colVir[9], "hspIndigenousNAmerica" = colVir[10], "hspIndigenousSAmerica" = colVir[11], "hspSiberia" = colVir[12], "hspUral" = colVir[13], "Hcetorum" = colVir[14])
+colPop <- c("Hacinonychis" = colVir[10], "hpAfrica1" = colVir[12], "hpAfrica2" = colVir[13], "hpAsia2" = colVir[15], "hpEurope" = colVir[3], "hpNEAfrica" = colVir[14], "hpNorthAsia" = colVir[4], "hpSahul" = colVir[9], "hspEAsia" = "#FF6E3A", "hspIndigenousNAmerica" = colVir[6], "hspIndigenousSAmerica" = colVir[8], "hspSiberia" = colVir[7], "hspUral" = colVir[11], "Hcetorum" = colVir[5])
 
+## remove them as cannot use them (no reference for them...)
 strainsToRemove <- c("HEL_BA8803AA_AS", "HEL_BA8804AA_AS", "HEL_BA8805AA_AS", "HEL_BA8806AA_AS", "HEL_BA8807AA_AS")
 
 
@@ -150,8 +149,13 @@ pop$pop[pop$pop %in% c("hspCNEAfrica")] <- "hpNEAfrica"
 #### TO REDO WITH THE WHOLE GENOME
 ###### 2. tree for all strains ######
 
-tree <- read.nexus("/home/elise/Desktop/hp/reviews/rooted_nexus/whole/coreCDS.nex")
+tree <- read.tree("TREE/coreCDS")
 tree <- drop.tip(tree, strainsToRemove) ## remove some of the tips (do not want these strains)
+
+## root the tree
+## here: root = hpAfrica2 and H.acinonychis strains
+tree <- root(tree, outgroup = pop$strain[pop$pop %in% c("Hacinonychis", "hpAfrica2")], resolve.root = TRUE)
+
 div <- data.frame(strain = tree$tip.label, pop = NA, divergence = "other")
 div <- getAllPop(div, pop)
 
@@ -171,7 +175,7 @@ p2 <- p %<+% div +
     labs(color = "population", fill = "population", shape = "ecotype") +
     theme(text = element_text(size = 18), axis.text = element_text(size = 14), legend.position = c(1.1, 0.35)) +
     guides(colour = guide_legend(override.aes = list(size=6)))
-ggsave(p2, filename = paste0("DRAFT/figures/TREE2.pdf"), device = "pdf", width = 16, height = 9, units = "in", dpi = 500)
+ggsave(p2, filename = paste0("TREE_wholeDataset.pdf"), device = "pdf", width = 16, height = 9, units = "in", dpi = 500)
 
 ############
 
@@ -202,7 +206,7 @@ ggplot(pca, aes(PC1, PC2, col = pop, shape = divergence, alpha = divergence)) +
     theme_set(theme_bw()) +
     theme(text = element_text(size = 16), axis.text = element_text(size = 14)) +
     guides(alpha = "none")
-ggsave(filename = paste0("DRAFT/figures/set_allPop/PCA.pdf"), device = "pdf", width = 16, height = 9, units = "in", dpi = 500)
+ggsave(filename = paste0("PCA.pdf"), device = "pdf", width = 16, height = 9, units = "in", dpi = 500)
 
 ############
 
@@ -231,8 +235,8 @@ ggplot(tot, aes(x = pos, y = pval, col = col)) +
     labs(x = "position (bp)", y = "-log10(p-val)", color = "") +
     geom_hline(yintercept = 10, col = "green") +
     theme_set(theme_bw()) +
-    scale_color_manual(breaks = c("black", "red", "grey"), values = c("black", "red", "grey"), labels = c("0.5 < FST < 0.9", "FST > 0.9", "FST < 0.5"))
-ggsave("DRAFT/figures/GWAS_FST.pdf", device = "pdf", width = 16, height = 9, units = "in", dpi = 500, scale = 0.75)
+    scale_color_manual(breaks = c("black", "red", "grey"), values = c("blue", "red", "grey"), labels = c("0.5 < FST < 0.9", "FST > 0.9", "FST < 0.5"))
+ggsave("GWAS_FST_colorChanged.pdf", device = "pdf", width = 16, height = 9, units = "in", dpi = 500, scale = 0.75)
 
 ## zoom
 CDS <- gff[which((gff$V4 > 1500000 & gff$V5 < 1550000) | (gff$V4 < 1500000 & gff$V5 > 1500000 & gff$V5 < 1550000)| (gff$V5 > 1550000 & gff$V4 > 1500000 & gff$V4 < 1550000)),]
@@ -242,11 +246,11 @@ ggplot(tot[tot$pos > 1500000 & tot$pos < 1550000,]) +
     labs(x = "position (bp)", y = "-log10(p-val)", color = "") +
     theme_set(theme_bw()) +
     geom_hline(yintercept = 10, color = "green") +
-    scale_color_manual(breaks = c("black", "red", "grey"), values = c("black", "red", "grey"), labels = c("0.5 < FST < 0.9", "FST > 0.9", "FST < 0.5")) +
+    scale_color_manual(breaks = c("black", "red", "grey"), values = c("blue", "red", "grey"), labels = c("0.5 < FST < 0.9", "FST > 0.9", "FST < 0.5")) +
     geom_segment(data = CDS[CDS$V7 == "+",], aes(x = V4, y = rep(-2, nrow(CDS[CDS$V7 == "+",])), xend = V5, yend = rep(-2, nrow(CDS[CDS$V7 == "+",]))), size = 1, arrow = arrow(length = unit(0.01, "npc")), linejoin = "mitre") +
     geom_segment(data = CDS[CDS$V7 == "-",], aes(xend = V4, y = rep(-2, nrow(CDS[CDS$V7 == "-",])), x = V5, yend = rep(-2, nrow(CDS[CDS$V7 == "-",]))), size = 1, arrow = arrow(length = unit(0.01, "npc")), linejoin = "mitre") +
     geom_text(data = CDSsig, aes(x = x, y =y , label = label, hjust = 0))
-ggsave("DRAFT/figures/GWAS_FST_zoom.pdf", device = "pdf", width = 16, height = 9, units = "in", dpi = 500, scale = 0.75)
+ggsave("GWAS_FST_zoom_colorChanged.pdf", device = "pdf", width = 16, height = 9, units = "in", dpi = 500, scale = 0.75)
 
 
 aa <- tot[tot$pos > 1500000 & tot$pos < 1550000 & tot$col == "red" & tot$pval > 10,]
@@ -290,14 +294,19 @@ p <- ggplot(data) +
     theme_set(theme_bw()) +
     theme(text = element_text(size = 18), axis.text = element_text(size = 14)) +
     guides(alpha = "none")
-ggsave(p, filename = paste0("DRAFT/figures/set_allPop/DNDS_", gene, ".pdf"), device = "pdf", width = 16, height = 9, units = "in", dpi = 500, scale = 0.75)
+ggsave(p, filename = paste0("DNDS_", gene, ".pdf"), device = "pdf", width = 16, height = 9, units = "in", dpi = 500, scale = 0.75)
 
 
 ##
 
 ## tree
-tree <- read.nexus(paste0("rooted_nexus/treeHigh.nex"))
+tree <- read.tree("DIVERGENT_NO_CDS/lowHighGenes/onAllGenome/trees/treeHigh")
 tree <- drop.tip(tree, strainsToRemove)
+
+## root the tree
+## here: root = Hardy strains
+tree <- root(tree, outgroup = pop$strain[pop$divergence %in% c("high")], resolve.root = TRUE)
+
 div <- data.frame(strain = tree$tip.label, pop = NA, divergence = "other")
 
 div <- getAllPop(div, pop)
@@ -318,7 +327,7 @@ p2 <- p %<+% div +
     labs(color = "population", fill = "population", shape = "ecotype", alpha = "ecotype") +
     theme(text = element_text(size = 18), axis.text = element_text(size = 14), legend.position = c(0.97, 0.35)) +
     guides(colour = guide_legend(override.aes = list(size=6)))
-ggsave(p2, filename = paste0("DRAFT/figures/TREE_", gene, ".pdf"), device = "pdf", width = 16, height = 9, units = "in", dpi = 500)
+ggsave(p2, filename = paste0("TREE_", gene, ".pdf"), device = "pdf", width = 16, height = 9, units = "in", dpi = 500)
 ##
 
 ## dN/dS Hardy vs Ubiquitous
@@ -342,7 +351,7 @@ p <- ggplot(data) +
     theme(text = element_text(size = 18), axis.text = element_text(size = 14)) +
     facet_wrap(~ outgroup) +
     guides(alpha = "none")
-ggsave(p, filename = paste0("DRAFT/figures/set_allPop/DNDS_", gene, "_HardyUbi.pdf"), device = "pdf", width = 16, height = 9, units = "in", dpi = 500, scale = 0.75)
+ggsave(p, filename = paste0("DNDS_", gene, "_HardyUbi.pdf"), device = "pdf", width = 16, height = 9, units = "in", dpi = 500, scale = 0.75)
 ##
 
 ############
@@ -372,13 +381,19 @@ p <- ggplot(data) +
     theme_set(theme_bw()) +
     theme(text = element_text(size = 18), axis.text = element_text(size = 14)) +
     guides(alpha = "none")
-ggsave(p, filename = paste0("DRAFT/figures/set_allPop/DNDS_", gene, ".pdf"), device = "pdf", width = 16, height = 9, units = "in", dpi = 500, scale = 0.75)
+ggsave(p, filename = paste0("DNDS_", gene, ".pdf"), device = "pdf", width = 16, height = 9, units = "in", dpi = 500, scale = 0.75)
 
 ##
 
 ## tree
-tree <- read.nexus(paste0("rooted_nexus/treeLow.nex"))
+## tree
+tree <- read.tree("DIVERGENT_NO_CDS/lowHighGenes/onAllGenome/trees/treeLow")
 tree <- drop.tip(tree, strainsToRemove)
+
+## root the tree
+## here: root = H. acinonychis and hpAfrica2 strains
+tree <- root(tree, outgroup = pop$strain[pop$pop %in% c("Hacinonychis", "hpAfrica2")], resolve.root = TRUE)
+
 div <- data.frame(strain = tree$tip.label, pop = NA, divergence = "other")
 
 div <- getAllPop(div, pop)
@@ -399,7 +414,7 @@ p2 <- p %<+% div +
     labs(color = "population", fill = "population", shape = "ecotype", alpha = "ecotype") +
     theme(text = element_text(size = 18), axis.text = element_text(size = 14), legend.position = c(1.1, 0.35)) +
     guides(colour = guide_legend(override.aes = list(size=6)))
-ggsave(p2, filename = paste0("DRAFT/figures/TREE_", gene, ".pdf"), device = "pdf", width = 16, height = 9, units = "in", dpi = 500)
+ggsave(p2, filename = paste0("TREE_", gene, "Rooted.pdf"), device = "pdf", width = 16, height = 9, units = "in", dpi = 500)
 ##
 
 ## dN/dS Hardy vs Ubiquitous
@@ -423,10 +438,61 @@ p <- ggplot(data) +
     theme(text = element_text(size = 18), axis.text = element_text(size = 14)) +
     facet_wrap(~ outgroup) +
     guides(alpha = "none")
-ggsave(p, filename = paste0("DRAFT/figures/set_allPop/DNDS_", gene, "_HardyUbi.pdf"), device = "pdf", width = 16, height = 9, units = "in", dpi = 500, scale = 0.75)
+ggsave(p, filename = paste0("DNDS_", gene, "_HardyUbi.pdf"), device = "pdf", width = 16, height = 9, units = "in", dpi = 500, scale = 0.75)
 ##
 
 ############
+
+
+## differentiated and undifferentiated rooted trees for a subset of strains
+tree <- read.tree("subset_trees/Hp_diff.nwk")
+tree <- drop.tip(tree, strainsToRemove)
+## root the tree
+## here: root = H. acinonychis and hpAfrica2 strains
+tree <- root(tree, outgroup = pop$strain[pop$divergence %in% c("high")], resolve.root = TRUE)
+div <- data.frame(strain = tree$tip.label, pop = NA, divergence = "other")
+div <- getAllPop(div, pop)
+strainsNA <- div$strain[div$pop == "NA"]
+tree <- drop.tip(tree, strainsNA)
+div <- div[div$pop != "NA",]
+p <- ggtree(tree, size = 0.05, layout = "circular") +
+    geom_treescale(fontsize = 3) 
+p2 <- p %<+% div +
+    aes(color = pop) +
+    geom_tippoint(aes(color = pop, shape = interaction(host,divergence)), size = 1) +
+    scale_color_manual(values = colPop[names(colPop) %in% unique(div$pop)]) +
+    scale_shape_manual(values = c(1, 19, 15, 4, NA, 0), labels = c("Hardy (H. acinonychis)", "Hardy", "Hardy (Primate)", "Ubiquitous (hspSiberia, hspIndigenousNAmerica)", "Ubiquitous", "Ubiquitous (Primate)")) +
+    theme(plot.margin = unit(c(-50,-100,-10,-200), "mm")) +
+    hexpand(.05, direction = -1) +
+    labs(color = "population", fill = "population", shape = "ecotype", alpha = "ecotype") +
+    theme(text = element_text(size = 18), axis.text = element_text(size = 14), legend.position = c(1.1, 0.35)) +
+    guides(colour = guide_legend(override.aes = list(size=6)))
+ggsave(p2, filename = paste0("TREE_subsetDiff.pdf"), device = "pdf", width = 16, height = 9, units = "in", dpi = 500)
+
+tree <- read.tree("subset_trees/Hp_undiff.nwk")
+tree <- drop.tip(tree, strainsToRemove)
+## root the tree
+## here: root = H. acinonychis and hpAfrica2 strains
+tree <- root(tree, outgroup = pop$strain[pop$pop %in% c("Hacinonychis", "hpAfrica2")], resolve.root = TRUE)
+div <- data.frame(strain = tree$tip.label, pop = NA, divergence = "other")
+div <- getAllPop(div, pop)
+strainsNA <- div$strain[div$pop == "NA"]
+tree <- drop.tip(tree, strainsNA)
+div <- div[div$pop != "NA",]
+p <- ggtree(tree, size = 0.05, layout = "circular") +
+    geom_treescale(fontsize = 3) 
+p2 <- p %<+% div +
+    aes(color = pop) +
+    geom_tippoint(aes(color = pop, shape = interaction(host,divergence)), size = 1) +
+    scale_color_manual(values = colPop[names(colPop) %in% unique(div$pop)]) +
+    scale_shape_manual(values = c(1, 19, 15, 4, NA, 0), labels = c("Hardy (H. acinonychis)", "Hardy", "Hardy (Primate)", "Ubiquitous (hspSiberia, hspIndigenousNAmerica)", "Ubiquitous", "Ubiquitous (Primate)")) +
+    theme(plot.margin = unit(c(-50,-100,-10,-200), "mm")) +
+    hexpand(.05, direction = -1) +
+    labs(color = "population", fill = "population", shape = "ecotype", alpha = "ecotype") +
+    theme(text = element_text(size = 18), axis.text = element_text(size = 14), legend.position = c(1.1, 0.35)) +
+    guides(colour = guide_legend(override.aes = list(size=6)))
+ggsave(p2, filename = paste0("TREE_subsetUndiff.pdf"), device = "pdf", width = 16, height = 9, units = "in", dpi = 500)
+
 
 #### OK
 ###### 8. haplotypes sig sites ######
@@ -488,8 +554,8 @@ p2 <- ggplot(databis[databis$pos == min(databis$pos),]) +
 leg1 <- get_legend(p1 + theme(legend.position = "bottom"))
 leg2 <- get_legend(p2 + theme(legend.position = "bottom"))
 ggarrange(p2 + theme(legend.position = "none"), p1+ theme(legend.position = "none"), NULL, leg1, NULL, leg2, ncol = 2, nrow = 3, widths = c(0.9,10), heights = c(10, 0.7, 1.1))
-ggsave(paste0("DRAFT/figures/set_allPop/haplotypes_v2.pdf"), dpi = 300, width = 16.2, height = 15)
-ggsave(paste0("DRAFT/figures/set_allPop/haplotypes2bis_v2.png"), dpi = 500, width = 20, height = 15)
+ggsave(paste0("haplotypes_v2.pdf"), dpi = 300, width = 16.2, height = 15)
+ggsave(paste0("haplotypes2bis_v2.png"), dpi = 500, width = 20, height = 15)
 
 
 
@@ -535,7 +601,7 @@ abline(h = lim2, col = "green")
 abline(v = lim1, col = "green")
 abline(a = fit$coefficients[1] + lim3, b = fit$coefficients[2], col = "green")
 
-write.table(popOutliers, file = "DRAFT/tables/listOutliers_nbAllDist.csv", sep = ",", quote = FALSE, col.names = TRUE, row.names = FALSE, append = FALSE)
+write.table(popOutliers, file = "listOutliers_nbAllDist.csv", sep = ",", quote = FALSE, col.names = TRUE, row.names = FALSE, append = FALSE)
 
 data <- getAllPop(data, pop)
 data$outliers <- "0"
@@ -550,8 +616,21 @@ ggplot(data) +
     labs(x = "# differences with Ubiquitous strains / # sites", y = "number of Hardy alleles", col = "populations", shape = "ecotype") +
     theme_set(theme_bw()) +
     theme(text = element_text(size = 18), axis.text = element_text(size = 14))
-ggsave("DRAFT/figures/set_allPop/nbHighAlleleVSdistLow.pdf", device = "pdf", width = 16, height = 9, units = "in", dpi = 500, scale = 0.75)
+ggsave("nbHighAlleleVSdistLow.pdf", device = "pdf", width = 16, height = 9, units = "in", dpi = 500, scale = 0.75)
 
+## ZOOM
+ggplot(data) +
+    geom_point(aes(x = dist, y = nbAll, col = pop, shape = interaction(divergence, outliers)), size = 2) +
+    geom_point(data = data[data$host == "Primate",], aes(x = dist, y = nbAll, color = pop, shape = "za"), size = 4) +
+    geom_point(data = data[data$host == "Hacinonychis",], aes(x = dist, y = nbAll, color = pop, shape = "zz"), size = 4) +
+    scale_colour_manual(values = colPop[names(colPop) %in% unique(data$pop)]) +
+    scale_shape_manual(values = c("high.0" = 19, "other.0" = 3, "other.1" = 4, "za" = 0, "zz" = 1), labels = c("Hardy", "Ubiquitous", "\noutliers\n", "Primate", "H. acinonychis"), guide = guide_legend(override.aes = list(size = rep(4,5)))) +
+    labs(x = "# differences with Ubiquitous strains / # sites", y = "number of Hardy alleles", col = "populations", shape = "ecotype") +
+    theme_set(theme_bw()) +
+    theme(text = element_text(size = 18), axis.text = element_text(size = 14)) +
+    xlim(0.03, 0.06) +
+    ylim(100, 400)
+ggsave("nbHighAlleleVSdistLow_ZOOM.pdf", device = "pdf", width = 16, height = 9, units = "in", dpi = 500, scale = 0.75)
 
 
 ############
@@ -564,7 +643,7 @@ load("HAPLOTYPES/onAllGenome/dataBlock_pval10FST0.9.RData") ## databis
 load("HAPLOTYPES/onAllGenome/highBlock_pval10FST0.9.RData") ## highBlock
 load("HAPLOTYPES/onAllGenome/countHighAllele_pval10FST0.9.RData") ## subdata
 
-outliers <- read.table("DRAFT/tables/listOutliers_nbAllDist.csv", sep = ",", header = TRUE)
+outliers <- read.table("listOutliers_nbAllDist.csv", sep = ",", header = TRUE)
 
 subdata$outliers <- 0
 subdata$outliers[subdata$strain %in% outliers$strain] <- 1
@@ -596,7 +675,21 @@ ggplot(subdata) +
     labs(y = "number of Hardy alleles", x = "number of Hardy blocks", col = "populations", shape = "ecotype") +
     theme_set(theme_bw()) +
     theme(text = element_text(size = 18), axis.text = element_text(size = 14))
-ggsave("DRAFT/figures/set_allPop/highBlockAllele.pdf", device = "pdf", width = 16, height = 9, units = "in", dpi = 500, scale = 0.75)
+ggsave("highBlockAllele.pdf", device = "pdf", width = 16, height = 9, units = "in", dpi = 500, scale = 0.75)
+
+## ZOOM
+ggplot(subdata) +
+    geom_point(aes(x = nbBlock, y = nb, col = pop, shape = divergence), size = 2) +
+    geom_point(data = subdata[subdata$host == "Primate",], aes(x = nbBlock, y = nb, color = pop, shape = "za"), size = 4) +
+    geom_point(data = subdata[subdata$host == "Hacinonychis",], aes(x = nbBlock, y = nb, color = pop, shape = "zz"), size = 4) +
+    scale_colour_manual(values = colPop[names(colPop) %in% unique(subdata$pop)]) +
+    scale_shape_manual(values = c("high" = 19, "low" = 3, "outliers" = 4, "za" = 0, "zz" = 1), labels = c("Hardy", "Ubiquitous", "\noutliers\n", "Primate", "H. acinonychis"), guide = guide_legend(override.aes = list(size = rep(4,5)))) +
+    labs(y = "number of Hardy alleles", x = "number of Hardy blocks", col = "populations", shape = "ecotype") +
+    theme_set(theme_bw()) +
+    theme(text = element_text(size = 18), axis.text = element_text(size = 14)) +
+    xlim(0, 150) +
+    ylim(100, 400)
+ggsave("highBlockAllele_ZOOM.pdf", device = "pdf", width = 16, height = 9, units = "in", dpi = 500, scale = 0.75)
 
 
 ############
@@ -606,7 +699,8 @@ ggsave("DRAFT/figures/set_allPop/highBlockAllele.pdf", device = "pdf", width = 1
 
 ## add the VacA alleles manually?
 
-tree <- read.nexus("rooted_nexus/HpGP_VacA.nex")
+tree <- read.tree("GENES/VacA/Nucleotide_1fragHcetorum/HpGP_VacA.nwk")
+tree <- root(tree, outgroup = "AFI05407.1", resolve.root = TRUE) ## H.cetorum strain as an outgroup, when available
 div <- data.frame(straini = tree$tip.label, pop = NA, divergence = "other")
 div$strain <- sapply(strsplit(div$straini, split = ".", fixed = TRUE), function(x) x[1])
 
@@ -626,7 +720,7 @@ p2 <- p %<+% div +
     labs(color = "population", fill = "population", shape = "ecotype", alpha = "ecotype") +
     theme(text = element_text(size = 18), axis.text = element_text(size = 14), legend.position = c(1.35,0.5)) +
     guides(colour = guide_legend(override.aes = list(size=6)))
-ggsave(p2, filename = paste0("DRAFT/figures/TREE_VacA.pdf"), device = "pdf", width = 16, height = 9, units = "in", dpi = 500)
+ggsave(p2, filename = paste0("TREE_VacA.pdf"), device = "pdf", width = 16, height = 9, units = "in", dpi = 500)
 
 ############
 
@@ -648,18 +742,19 @@ ggplot(data[data$significant == "*",], aes(x = Term2, y = Fold.Enrichment)) +
     labs(x = "term", y = "fold enrichment") +
     theme(axis.text.x = element_text(angle = 60, vjust = 1, hjust=1)) +
     theme(text = element_text(size = 16), axis.text = element_text(size = 14))
-ggsave(filename = paste0("DRAFT/figures/enrichment.pdf"), device = "pdf", width = 10, height = 10, units = "in", dpi = 500)
+ggsave(filename = paste0("enrichment.pdf"), device = "pdf", width = 10, height = 10, units = "in", dpi = 500)
 ############
 
 #### OK
 ###### 13. tree UreA ######
 
 gene <- "UreA"
-Hcetorum <- c("AFI05732", "AFI05559")
+Hcetorum <- c("AFI05732.1", "AFI05559.1")
 
 seqType <- "_nt"
-tree <- read.nexus(paste0("rooted_nexus/", gene, seqType, ".nex"))
+tree <- read.tree(paste0("GENES/UreA/Nucleotide_sample/", gene, seqType, ".nwk"))
 tree <- drop.tip(tree, strainsToRemove)
+tree <- root(tree, outgroup = Hcetorum[1], resolve.root = TRUE) ## outgroup = Hcetorum
 div <- data.frame(straini = tree$tip.label, pop = NA, divergence = "other")
 div$strain <- sapply(strsplit(div$straini, split = ".", fixed = TRUE), function(x) x[1])
 
@@ -678,11 +773,12 @@ p2 <- p %<+% div +
     labs(color = "population", fill = "population", shape = "ecotype", alpha = "ecotype") +
     theme(text = element_text(size = 18), axis.text = element_text(size = 14), legend.position = c(0.8,0.3)) +
     guides(colour = guide_legend(override.aes = list(size=6)))
-ggsave(p2, filename = paste0("DRAFT/figures/TREE_", gene, seqType, ".pdf"), device = "pdf", width = 16, height = 9, units = "in", dpi = 500)
+ggsave(p2, filename = paste0("TREE_", gene, seqType, ".pdf"), device = "pdf", width = 16, height = 9, units = "in", dpi = 500)
 
 seqType <- "_nt1"
-tree <- read.nexus(paste0("rooted_nexus/", gene, seqType, ".nex"))
+tree <- read.tree(paste0("GENES/UreA/Nucleotide_sample/", gene, seqType, ".nwk"))
 tree <- drop.tip(tree, strainsToRemove)
+tree <- root(tree, outgroup = Hcetorum[Hcetorum %in% tree$tip.label], resolve.root = TRUE) ## outgroup = Hcetorum
 div <- data.frame(straini = tree$tip.label, pop = NA, divergence = "other")
 div$strain <- sapply(strsplit(div$straini, split = ".", fixed = TRUE), function(x) x[1])
 
@@ -701,11 +797,12 @@ p2 <- p %<+% div +
     labs(color = "population", fill = "population", shape = "ecotype", alpha = "ecotype") +
     theme(text = element_text(size = 18), axis.text = element_text(size = 14), legend.position = c(0.85,0.5)) +
     guides(colour = guide_legend(override.aes = list(size=6)))
-ggsave(p2, filename = paste0("DRAFT/figures/TREE_", gene, seqType, ".pdf"), device = "pdf", width = 16, height = 9, units = "in", dpi = 500)
+ggsave(p2, filename = paste0("TREE_", gene, seqType, ".pdf"), device = "pdf", width = 16, height = 9, units = "in", dpi = 500)
 
 seqType <- "_nt2"
-tree <- read.nexus(paste0("rooted_nexus/", gene, seqType, ".nex"))
+tree <- read.tree(paste0("GENES/UreA/Nucleotide_sample/", gene, seqType, ".nwk"))
 tree <- drop.tip(tree, strainsToRemove)
+tree <- root(tree, outgroup = Hcetorum[Hcetorum %in% tree$tip.label], resolve.root = TRUE) ## outgroup = Hcetorum
 div <- data.frame(straini = tree$tip.label, pop = NA, divergence = "other")
 div$strain <- sapply(strsplit(div$straini, split = ".", fixed = TRUE), function(x) x[1])
 
@@ -724,7 +821,7 @@ p2 <- p %<+% div +
     labs(color = "population", fill = "population", shape = "ecotype", alpha = "ecotype") +
     theme(text = element_text(size = 18), axis.text = element_text(size = 14), legend.position = c(0.85,0.5)) +
     guides(colour = guide_legend(override.aes = list(size=6)))
-ggsave(p2, filename = paste0("DRAFT/figures/TREE_", gene, seqType, ".pdf"), device = "pdf", width = 16, height = 9, units = "in", dpi = 500)
+ggsave(p2, filename = paste0("TREE_", gene, seqType, ".pdf"), device = "pdf", width = 16, height = 9, units = "in", dpi = 500)
 
 ############
 
@@ -732,11 +829,12 @@ ggsave(p2, filename = paste0("DRAFT/figures/TREE_", gene, seqType, ".pdf"), devi
 ###### 14. tree UreB ######
 
 gene <- "UreB"
-Hcetorum <- c("AFI05560", "AFI05733")
+Hcetorum <- c("AFI05560.1", "AFI05733.1")
 
 seqType <- "_nt"
-tree <- read.nexus(paste0("rooted_nexus/", gene, seqType, ".nex"))
+tree <- read.tree(paste0("GENES/UreB/Nucleotide_sample/", gene, seqType, ".nwk"))
 tree <- drop.tip(tree, strainsToRemove)
+tree <- root(tree, outgroup = Hcetorum[2], resolve.root = TRUE) ## outgroup = Hcetorum
 div <- data.frame(straini = tree$tip.label, pop = NA, divergence = "other")
 div$strain <- sapply(strsplit(div$straini, split = ".", fixed = TRUE), function(x) x[1])
 
@@ -755,12 +853,13 @@ p2 <- p %<+% div +
     labs(color = "population", fill = "population", shape = "ecotype", alpha = "ecotype") +
     theme(text = element_text(size = 18), axis.text = element_text(size = 14), legend.position = c(1,0.45)) +
     guides(colour = guide_legend(override.aes = list(size=6)))
-ggsave(p2, filename = paste0("DRAFT/figures/TREE_", gene, seqType, ".pdf"), device = "pdf", width = 16, height = 9, units = "in", dpi = 500)
+ggsave(p2, filename = paste0("TREE_", gene, seqType, ".pdf"), device = "pdf", width = 16, height = 9, units = "in", dpi = 500)
 
 
 seqType <- "_nt1"
-tree <- read.nexus(paste0("rooted_nexus/", gene, seqType, ".nex"))
+tree <- read.tree(paste0("GENES/UreB/Nucleotide_sample/", gene, seqType, ".nwk"))
 tree <- drop.tip(tree, strainsToRemove)
+tree <- root(tree, outgroup = Hcetorum[Hcetorum %in% tree$tip.label], resolve.root = TRUE) ## outgroup = Hcetorum
 div <- data.frame(straini = tree$tip.label, pop = NA, divergence = "other")
 div$strain <- sapply(strsplit(div$straini, split = ".", fixed = TRUE), function(x) x[1])
 
@@ -779,12 +878,13 @@ p2 <- p %<+% div +
     labs(color = "population", fill = "population", shape = "ecotype", alpha = "ecotype") +
     theme(text = element_text(size = 18), axis.text = element_text(size = 14), legend.position = c(0.9,0.35)) +
     guides(colour = guide_legend(override.aes = list(size=6)))
-ggsave(p2, filename = paste0("DRAFT/figures/TREE_", gene, seqType, ".pdf"), device = "pdf", width = 16, height = 9, units = "in", dpi = 500)
+ggsave(p2, filename = paste0("TREE_", gene, seqType, ".pdf"), device = "pdf", width = 16, height = 9, units = "in", dpi = 500)
 
 
 seqType <- "_nt2"
-tree <- read.nexus(paste0("rooted_nexus/", gene, seqType, ".nex"))
+tree <- read.tree(paste0("GENES/UreB/Nucleotide_sample/", gene, seqType, ".nwk"))
 tree <- drop.tip(tree, strainsToRemove)
+tree <- root(tree, outgroup = Hcetorum[Hcetorum %in% tree$tip.label], resolve.root = TRUE) ## outgroup = Hcetorum
 div <- data.frame(straini = tree$tip.label, pop = NA, divergence = "other")
 div$strain <- sapply(strsplit(div$straini, split = ".", fixed = TRUE), function(x) x[1])
 
@@ -803,7 +903,7 @@ p2 <- p %<+% div +
     labs(color = "population", fill = "population", shape = "ecotype", alpha = "ecotype") +
     theme(text = element_text(size = 18), axis.text = element_text(size = 14), legend.position = c(0.8,0.3)) +
     guides(colour = guide_legend(override.aes = list(size=6)))
-ggsave(p2, filename = paste0("DRAFT/figures/TREE_", gene, seqType, ".pdf"), device = "pdf", width = 16, height = 9, units = "in", dpi = 500)
+ggsave(p2, filename = paste0("TREE_", gene, seqType, ".pdf"), device = "pdf", width = 16, height = 9, units = "in", dpi = 500)
 
 ############
 
@@ -1116,8 +1216,8 @@ ggsave(filename = paste0("DRAFT/figures/set_allPop/dS_monkey.pdf"), device = "pd
 ###### 17. tree H. cetorum ######
 
 for(gene in 1:81) {
-    geneName <- strsplit(system(paste0("grep 'GENE ", gene, " =====>' outTreeHits.out"), intern = TRUE), split = "=====> ")[[1]][2]
-    tree <- read.nexus(paste0("rooted_nexus/genes/", gene))
+    geneName <- strsplit(system(paste0("grep 'GENE ", gene, " =====>' DIVERGENT_NO_CDS/Hcetorum_MIT99-5656/tree_Hcetorum/outTreeHits.out"), intern = TRUE), split = "=====> ")[[1]][2]
+    tree <- read.tree(paste0("DIVERGENT_NO_CDS/Hcetorum_MIT99-5656/tree_Hcetorum/nwkFile/", gene, "_nt.nwk"))
     tree <- drop.tip(tree, strainsToRemove)
     div <- data.frame(straini = tree$tip.label, pop = NA, divergence = "other")
     div$strain <- sapply(strsplit(div$straini, split = ".", fixed = TRUE), function(x) x[1])
@@ -1126,6 +1226,12 @@ for(gene in 1:81) {
     div$divergence[div$divergence == "other"] <- "low"
     div$divergence[div$pop == "Hcetorum"] <- "Hcetorum"
     div$divergence[div$pop == "host"] <- "whales"
+    if("Hcetorum" %in% div$pop) {
+        tree <- root(tree, outgroup = div$straini[div$pop == "Hcetorum"], resolve.root = TRUE) ## outgroup = Hcetorum
+    } else {
+        print(gene)
+        tree <- root(tree, outgroup = div$straini[div$pop == "Hacinonychis"], resolve.root = TRUE)
+    }
     p <- ggtree(tree, layout = "rectangular") +
         geom_treescale() 
     p2 <- p %<+% div +
@@ -1138,11 +1244,10 @@ for(gene in 1:81) {
         # hexpand(.05, direction = -1) +
         labs(color = "population", fill = "population", shape = "ecotype", subtitle = geneName) +
         theme(text = element_text(size = 12), legend.position = "none")  
-    ggsave(p2, filename = paste0("DRAFT/figures/TREE/TREE_", gene, ".pdf"), device = "pdf", width = 16, height = 9, units = "in", dpi = 500)
+    ggsave(p2, filename = paste0("TREEHcetorum/TREE_", gene, ".pdf"), device = "pdf", width = 16, height = 9, units = "in", dpi = 500)
 }
 
 ############
-
 
 
 
