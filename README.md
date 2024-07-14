@@ -5,6 +5,8 @@ An ancient ecospecies of Helicobacter pylori found in Indigenous populations and
 Elise Tourrette, Roberto C. Torres, Sarah L. Svensson, Takashi Matsumoto, Muhammad Miftahussurur, Kartika Afrida Fauzia, Ricky Indra Alfaray, Ratha-Korn Vilaichone, Vo Phuoc Tuan, HelicobacterGenomicsConsortium, Difei Wang, Abbas Yadegar, Lisa M. Olsson, Zhemin Zhou, Yoshio Yamaoka, Kaisa Thorell, Daniel Falush
 bioRxiv 2023.04.28.538659; doi: https://doi.org/10.1101/2023.04.28.538659
 
+zenodo (for the code): 10.5281/zenodo.12740447
+
 For the data analysis:
 
 s0_workflow.sh: main script that describe the whole workflow (order of the scripts used) and the different command lines used
